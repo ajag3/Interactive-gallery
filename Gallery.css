@@ -30,7 +30,6 @@
     font-weight: bold;
   }
   
-  /* Modal Styles */
   .modal {
     position: relative;
     background: black;
@@ -69,7 +68,6 @@
     color: #000;
   }
   
-  /* Responsive Styles */
   @media (max-width: 1024px) {
     .image-container {
       width: 45%;
