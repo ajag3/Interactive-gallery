@@ -65,7 +65,6 @@ const Gallery = () => {
       setCurrentImage({});
     };
   
-    // Base settings for all carousels
     const baseSettings = {
       dots: true,
       infinite: true,
@@ -74,20 +73,17 @@ const Gallery = () => {
       slidesToScroll: 1,
       pauseOnHover: true,
       responsive: [
-        // ... (your responsive settings)
       ],
     };
   
-    // Define settings for each carousel with different speeds
     const carouselSettings = [
-      { ...baseSettings, autoplay: true, autoplaySpeed: 2000 }, // Fast
-      { ...baseSettings, autoplay: true, autoplaySpeed: 4000 }, // Medium
-      { ...baseSettings, autoplay: true, autoplaySpeed: 6000 }, // Slow
+      { ...baseSettings, autoplay: true, autoplaySpeed: 1000 }, 
+      { ...baseSettings, autoplay: true, autoplaySpeed: 3000 },
+      { ...baseSettings, autoplay: true, autoplaySpeed: 5000 }, 
     ];
   
     return (
       <div className="gallery">
-        {/* Fast Carousel */}
         <h2>Fast Carousel</h2>
         <Slider {...carouselSettings[0]}>
           {images.map((img, index) => (
@@ -104,7 +100,6 @@ const Gallery = () => {
           ))}
         </Slider>
   
-        {/* Medium Carousel */}
         <h2>Medium Carousel</h2>
         <Slider {...carouselSettings[1]}>
           {images.map((img, index) => (
@@ -121,7 +116,6 @@ const Gallery = () => {
           ))}
         </Slider>
   
-        {/* Slow Carousel */}
         <h2>Slow Carousel</h2>
         <Slider {...carouselSettings[2]}>
           {images.map((img, index) => (
@@ -138,7 +132,6 @@ const Gallery = () => {
           ))}
         </Slider>
   
-        {/* Modal Component */}
         <Modal
           isOpen={modalIsOpen}
           onRequestClose={closeModal}
