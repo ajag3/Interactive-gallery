@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Slider from 'react-slick';
 import './Gallery.css';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Modal from 'react-modal';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 Modal.setAppElement('#root');
 
@@ -51,106 +51,187 @@ const images = [
   },
 ];
 
+const itemVariants = {
+  hidden: { opacity: 0, y: 50 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.5, ease: "easeOut" } 
+  }
+};
+
+// Modal animation variants
+const modalVariants = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { 
+    opacity: 1, 
+    scale: 1,
+    transition: { duration: 0.3, ease: "easeOut" }
+  },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
+};
+
 const Gallery = () => {
-    const [modalIsOpen, setModalIsOpen] = useState(false);
-    const [currentImage, setCurrentImage] = useState({});
-  
-    const openModal = (img) => {
-      setCurrentImage(img);
-      setModalIsOpen(true);
-    };
-  
-    const closeModal = () => {
-      setModalIsOpen(false);
-      setCurrentImage({});
-    };
-  
-    const baseSettings = {
-      dots: true,
-      infinite: true,
-      speed: 500,
-      slidesToShow: 3,
-      slidesToScroll: 1,
-      pauseOnHover: true,
-      responsive: [
-      ],
-    };
-  
-    const carouselSettings = [
-      { ...baseSettings, autoplay: true, autoplaySpeed: 1000 }, 
-      { ...baseSettings, autoplay: true, autoplaySpeed: 3000 },
-      { ...baseSettings, autoplay: true, autoplaySpeed: 5000 }, 
-    ];
-  
-    return (
-      <div className="gallery">
-        <h2>Fast Carousel</h2>
-        <Slider {...carouselSettings[0]}>
-          {images.map((img, index) => (
-            <motion.div
-              key={`fast-${index}`}
-              className="image-container"
-              onClick={() => openModal(img)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <img src={img.src} alt={img.name} />
-              <p className="image-name">{img.name}</p>
-            </motion.div>
-          ))}
-        </Slider>
-  
-        <h2>Medium Carousel</h2>
-        <Slider {...carouselSettings[1]}>
-          {images.map((img, index) => (
-            <motion.div
-              key={`medium-${index}`}
-              className="image-container"
-              onClick={() => openModal(img)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <img src={img.src} alt={img.name} />
-              <p className="image-name">{img.name}</p>
-            </motion.div>
-          ))}
-        </Slider>
-  
-        <h2>Slow Carousel</h2>
-        <Slider {...carouselSettings[2]}>
-          {images.map((img, index) => (
-            <motion.div
-              key={`slow-${index}`}
-              className="image-container"
-              onClick={() => openModal(img)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <img src={img.src} alt={img.name} />
-              <p className="image-name">{img.name}</p>
-            </motion.div>
-          ))}
-        </Slider>
-  
-        <Modal
-          isOpen={modalIsOpen}
-          onRequestClose={closeModal}
-          contentLabel="Image Modal"
-          className="modal"
-          overlayClassName="overlay"
-        >
-          <button onClick={closeModal} className="close-button">
-            &times;
-          </button>
-          <img
-            src={currentImage.src}
-            alt={currentImage.name}
-            className="modal-image"
-          />
-          <p className="modal-image-name">{currentImage.name}</p>
-        </Modal>
-      </div>
-    );
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(null);
+
+  const openModal = (index) => {
+    setCurrentImageIndex(index);
+    setModalIsOpen(true);
   };
-  
-  export default Gallery;
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+    setCurrentImageIndex(null);
+  };
+
+  const currentImage = currentImageIndex !== null ? images[currentImageIndex] : {};
+
+  // Keyboard navigation for modal
+  const handleKeyDown = useCallback((e) => {
+    if (modalIsOpen) {
+      if (e.key === 'Escape') {
+        closeModal();
+      } else if (e.key === 'ArrowRight') {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+      } else if (e.key === 'ArrowLeft') {
+        setCurrentImageIndex((prevIndex) =>
+          prevIndex === 0 ? images.length - 1 : prevIndex - 1
+        );
+      }
+    }
+  }, [modalIsOpen]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  const baseSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 3,
+    slidesToScroll: 1,
+    pauseOnHover: true,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 2,
+        }
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 1,
+        }
+      }
+    ],
+  };
+
+  const carouselSettings = [
+    { ...baseSettings, autoplay: true, autoplaySpeed: 1000 }, 
+    { ...baseSettings, autoplay: true, autoplaySpeed: 3000 }, 
+    { ...baseSettings, autoplay: true, autoplaySpeed: 5000 }, 
+  ];
+
+  return (
+    <div className="gallery">
+      <h2>Fast Carousel</h2>
+      <Slider {...carouselSettings[0]}>
+        {images.map((img, index) => (
+          <motion.div
+            key={`fast-${index}`}
+            className="image-container"
+            onClick={() => openModal(index)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial="hidden"
+            animate="visible"
+            variants={itemVariants}
+          >
+            <img src={img.src} alt={img.name} />
+            <p className="image-name">{img.name}</p>
+          </motion.div>
+        ))}
+      </Slider>
+
+      <h2>Medium Carousel</h2>
+      <Slider {...carouselSettings[1]}>
+        {images.map((img, index) => (
+          <motion.div
+            key={`medium-${index}`}
+            className="image-container"
+            onClick={() => openModal(index)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial="hidden"
+            animate="visible"
+            variants={itemVariants}
+          >
+            <img src={img.src} alt={img.name} />
+            <p className="image-name">{img.name}</p>
+          </motion.div>
+        ))}
+      </Slider>
+
+      <h2>Slow Carousel</h2>
+      <Slider {...carouselSettings[2]}>
+        {images.map((img, index) => (
+          <motion.div
+            key={`slow-${index}`}
+            className="image-container"
+            onClick={() => openModal(index)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            initial="hidden"
+            animate="visible"
+            variants={itemVariants}
+          >
+            <img src={img.src} alt={img.name} />
+            <p className="image-name">{img.name}</p>
+          </motion.div>
+        ))}
+      </Slider>
+
+      {/* AnimatePresence handles mounting/unmounting with animation */}
+      <AnimatePresence>
+        {modalIsOpen && (
+          <Modal
+            isOpen={modalIsOpen}
+            onRequestClose={closeModal}
+            contentLabel="Image Modal"
+            className="modal"
+            overlayClassName="overlay"
+          >
+            <motion.div 
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={modalVariants}
+              style={{ position: 'relative' }}
+            >
+              <button onClick={closeModal} className="close-button" aria-label="Close Modal">
+                &times;
+              </button>
+              <img
+                src={currentImage.src}
+                alt={currentImage.name}
+                className="modal-image"
+              />
+              <p className="modal-image-name">{currentImage.name}</p>
+              {currentImage.description && <p>{currentImage.description}</p>}
+              <div className="modal-navigation">
+                <button onClick={() => setCurrentImageIndex((prevIndex) => prevIndex === 0 ? images.length - 1 : prevIndex - 1)}>Previous</button>
+                <button onClick={() => setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length)}>Next</button>
+              </div>
+            </motion.div>
+          </Modal>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default Gallery;
